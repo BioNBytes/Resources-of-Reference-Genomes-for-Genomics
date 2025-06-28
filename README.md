@@ -106,7 +106,7 @@ The choice of annotation source and format directly impacts mapping, quantificat
 
 Below are code examples for retrieving canonical transcript IDs for mouse or human genes from both NCBI and Ensembl.
 
-#### A. Retrieving Canonical NCBI RefSeq Transcript for a Mouse Gene
+#### **A. Retrieving Canonical NCBI RefSeq Transcript for a Mouse Gene
 - Uses NCBI E-utilities (`esearch`, `elink`, `esummary`) to find curated NM_ transcripts by gene symbol and organism.
 - Includes retry with exponential backoff for HTTP 429 (rate limit) errors.
 - Works for both **mouse** and **human** genes.**
@@ -117,6 +117,10 @@ import requests
 from xml.etree import ElementTree as ET
 
 def make_request_with_retry(url, params, max_retries=5):
+    """
+    Make an HTTP GET request with retries on HTTP 429 (Too Many Requests).
+    Uses exponential backoff (wait times: 1, 2, 4, 8, 16 seconds).
+    """
     for attempt in range(max_retries):
         response = requests.get(url, params=params)
         if response.status_code == 429:
@@ -124,10 +128,20 @@ def make_request_with_retry(url, params, max_retries=5):
             print(f"429 received, sleeping for {wait} seconds...")
             time.sleep(wait)
         else:
-            return response
+            return response  # Successful or other error code
+    # If max retries reached without success, raise an exception
     raise Exception("Max retries reached with 429 responses")
 
 def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
+    """
+    Retrieve the canonical NCBI RefSeq transcript (NM_ accession) for a given gene symbol and organism.
+    Steps:
+      1. Search for gene ID using esearch.
+      2. Find linked RefSeq RNA transcripts via elink.
+      3. Summarize transcript info using esummary.
+      4. Return the first curated NM_ transcript found.
+    """
+    # Step 1: Use esearch to find the gene ID for the gene symbol and organism
     search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     search_params = {
         "db": "gene",
@@ -135,6 +149,7 @@ def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
         "retmode": "json"
     }
     response = make_request_with_retry(search_url, search_params)
+    
     if not response.ok:
         return f"NCBI esearch request failed: {response.status_code} - {response.reason}"
 
@@ -153,6 +168,7 @@ def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
 
     gene_id = gene_id_list[0]
 
+    # Step 2: Use elink to find RefSeq RNA transcripts linked to this gene ID
     link_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi"
     link_params = {
         "dbfrom": "gene",
@@ -162,6 +178,7 @@ def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
         "linkname": "gene_nuccore_refseqrna"
     }
     response = make_request_with_retry(link_url, link_params)
+
     try:
         linked_ids = response.json()["linksets"][0]["linksetdbs"][0]["links"]
     except (KeyError, IndexError):
@@ -170,7 +187,8 @@ def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
     if not linked_ids:
         return f"No linked RefSeq transcripts found for {gene_symbol} in {organism}"
 
-    ids_str = ",".join(linked_ids[:50])
+    # Step 3: Use esummary to get transcript details for linked transcripts
+    ids_str = ",".join(linked_ids[:50])  # Limit to first 50 transcripts
     summary_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
     summary_params = {
         "db": "nucleotide",
@@ -178,8 +196,8 @@ def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
         "retmode": "xml"
     }
     response = make_request_with_retry(summary_url, summary_params)
-    root = ET.fromstring(response.content)
 
+    root = ET.fromstring(response.content)
     transcripts = []
     for docsum in root.findall(".//DocSum"):
         accession = None
@@ -189,11 +207,11 @@ def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
         if accession:
             transcripts.append(accession)
 
+    # Step 4: Return the first curated NM_ transcript found or an error message
     if transcripts:
         return transcripts[0]
     else:
         return f"No NM_ (curated) transcripts found for {gene_symbol} in {organism}"
-
 
 
 # Example usage for mouse
