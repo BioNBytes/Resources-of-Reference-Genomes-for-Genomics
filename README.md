@@ -106,7 +106,7 @@ The choice of annotation source and format directly impacts mapping, quantificat
 
 Below are code examples for retrieving canonical transcript IDs for mouse or human genes from both NCBI and Ensembl.
 
-#### **A. Retrieving Canonical NCBI RefSeq Transcript for a Mouse Gene
+#### A. Retrieving Canonical NCBI RefSeq Transcript for a Mouse Gene
 - Uses NCBI E-utilities (`esearch`, `elink`, `esummary`) to find curated NM_ transcripts by gene symbol and organism.
 - Includes retry with exponential backoff for HTTP 429 (rate limit) errors.
 - Works for both **mouse** and **human** genes.**
