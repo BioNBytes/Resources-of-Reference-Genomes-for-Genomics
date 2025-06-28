@@ -32,6 +32,7 @@ This guide contains key concepts and summary of resources on reference genomes a
     Alternate haplotypes or divergent regions (e.g., MHC), representing genetic variation within the species.
 - **Patch sequences**  
     Sequence corrections or updates that do not change the chromosome coordinate system.
+    
 ### 2. Human Reference Genomes
 
 The **human reference genome** is a digital representation of human DNA used for gene annotation, variant calling, and sequence alignment. The most commonly used assemblies, **GRCh37 (hg19)** and **GRCh38 (hg38)**, are **linear assemblies** derived from a small number of individuals, primarily of European ancestry. GRCh38 added modeled centromeres, alternate loci for highly polymorphic regions (like the MHC), and improved gap representation. However, both assemblies have limitations: they lack full coverage of repetitive regions (e.g., centromeres, telomeres), suffer from **reference bias** (favoring alleles present in the reference), and underrepresent global genetic diversity.
@@ -46,7 +47,6 @@ Despite these advancements, GRCh38 remains the dominant reference in most genomi
 | **GRCh38 (hg38)**    | 2013         | Improved centromere modeling, added alternate loci (e.g., for MHC), better gap representation.               |
 | **T2T-CHM13**        | 2022         | First telomere-to-telomere (T2T) assembly. No gaps, complete centromeres, acrocentric arms, and rDNA arrays. |
 | **pangenome (HPRC)** | 2023–present | Graph-based genome capturing population diversity across many haplotypes and ancestries.                     |
-
 
 ### 3. Mouse Reference Genomes
 The **mouse reference genome** has undergone several important updates over the years. It began with the initial draft assembly, **MGSCv37**, released in 2004, followed by improvements in **NCBIm37** (2007) and **GRCm38** (2011). The current standard, **GRCm39**, was released in 2020. These assemblies are mainly based on the **C57BL/6J inbred strain**, a widely used laboratory mouse model, and provide high-quality, **chromosome-level sequences**.
@@ -76,16 +76,14 @@ The choice of annotation source and format directly impacts mapping, quantificat
 | **GENCODE**             | GENCODE Consortium (EMBL-EBI & Sanger Institute) | GENCODE                                 | GTF, GFF3, FASTA         | ENSG/ENST (same as Ensembl)                         | Most comprehensive, manually curated annotation for human and mouse; merges Ensembl and HAVANA; includes protein-coding, lncRNA, pseudogenes, sRNAs; default in GTEx/ENCODE. | Focus on human/mouse only; complex format for beginners         |
 | **UCSC Genome Browser** | UCSC                                             | UCSC Genes, refGene, ensGene, knownGene | BED, GTF, BigBed, BAM    | uc#####.# (UCSC), NM_/NR_ (refGene), ENST (ensGene) | Integrates multiple annotation datasets (RefSeq, GENCODE, Ensembl); powerful visualization tools; customizable with user tracks.                                             | Quality varies by source; large data volume can be overwhelming |
 | **MANE**                | NCBI + Ensembl                                   | MANE Select / MANE Plus Clinical        | GTF, FASTA               | NM_/ENST (matched)                                  | One matched transcript per protein-coding gene, agreed by RefSeq and Ensembl; ideal for clinical/diagnostic use; high concordance.                                           | Limited to protein-coding genes                                 |
-| **UniProt**             | UniProt Consortium                               | UniProt                                 | FASTA, XML               | Protein accessions                                  | Protein sequence and functional annotation database; links genomic data to protein function, structure, and interactions.                                                    | Protein-centric; less focused on transcript structures          |
-
-**Additional Notes and Details:**
+**Notes:**
 - **GENCODE** (EMBL-EBI & Sanger Institute): High-quality, comprehensive annotation for human and mouse combining manual curation and automated pipelines; regularly updated and default for projects like GTEx and ENCODE. Mainly focused on human/mouse; complex formats can challenge beginners.
 - **Ensembl** (EMBL-EBI): Broad species coverage with automated, evidence-based annotation integrating GENCODE, RefSeq, UniProt, and RNA-seq; supports genome browsing and API. Automated pipelines may miss rare isoforms; transcript IDs can change.
 - **NCBI RefSeq**: Curated, non-redundant gene and transcript models for 165,000+ species; combines manual and computational curation; provides representative transcripts. Smaller species range and slower updates than Ensembl.
 - **UCSC Genome Browser** (UC Santa Cruz): Integrates annotation tracks from RefSeq, GENCODE, Ensembl, and comparative genomics with customizable visualization and user track support. Quality varies; transcript IDs differ by track (e.g., uc#####.#, NM_/NR_, ENST).
 - **MANE** (NCBI + Ensembl): Collaborative set providing one matched transcript per protein-coding gene for clinical use, ensuring high concordance; limited to protein-coding genes.
 - **UniProt**: Protein sequence and functional annotation linking genomic data to protein function and interactions; protein-centric and less detailed on transcript isoforms/non-coding RNAs.
-
+	
 **Annotation Formats:**
 
 | Format   | Description & Use Case                                                                                                                           |
@@ -94,13 +92,17 @@ The choice of annotation source and format directly impacts mapping, quantificat
 | **GFF3** | More structured and flexible; supports hierarchical relationships (gene→transcript→exon); better for complex feature annotation and submissions. |
 | **BED**  | Simple format for genomic regions; often used for visualization and custom tracks.                                                               |
 
-**Impact on Analysis:** 
-- Annotation sets vary in **transcript models**, **exon-intron structures**, and **curation methods**, which affects RNA-seq mapping, quantification, and downstream interpretation.
-- Only a minority of genes show identical quantification across resources due to these differences.
-- For **human and mouse** transcriptomics, **GENCODE** is generally recommended; **NCBI RefSeq** is favored for clinical or highly curated applications; **Ensembl** suits broad discovery; **UCSC Table Browser** is useful for custom, region-focused analyses.
-- Always document the **annotation source**, **version**, and **genome build** used in analyses.
-- Format inconsistencies (especially with some UCSC GTFs) may cause downstream pipeline issues.
-
+**Additional Notes:**
+- **Species-specific databases** (e.g., Wormbase, Flybase) and AWS iGenomes exist, but may be outdated.
+- **Chromosome naming conventions** differ by platform (e.g., NCBI/Ensembl: 1,2,...,X,Y,MT; UCSC: chr1, chr2, ..., chrM).
+- **Annotation files should use stable gene IDs** (not gene symbols) for consistency across versions.
+- **Download locations**: NCBI, Ensembl, GENCODE, and UCSC all provide FTP and browser-based access to assemblies and annotations.
+- **Impact on Analysis:** 
+	- Annotation sets vary in **transcript models**, **exon-intron structures**, and **curation methods**, which affects RNA-seq mapping, quantification, and downstream interpretation.
+	- Only a minority of genes show identical quantification across resources due to these differences.
+	- For **human and mouse** transcriptomics, **GENCODE** is generally recommended; **NCBI RefSeq** is favored for clinical or highly curated applications; **Ensembl** suits broad discovery; **UCSC Table Browser** is useful for custom, region-focused analyses.
+	- Always document the **annotation source**, **version**, and **genome build** used in analyses.
+	- Format inconsistencies (especially with some UCSC GTFs) may cause downstream pipeline issues.
 
 ### 5. Programmatic Access: Mouse Gene Example
 
@@ -284,13 +286,6 @@ print(f"Canonical NCBI transcript for {human_gene} ({human_organism}): {human_ca
 - **API Rate Limits:** Both NCBI and Ensembl APIs have request limits. For large-scale queries, there maybe delays.
 - **Canonical Transcript Definitions:** The definition of "canonical" may differ between databases
 - **Batch Processing:** Both scripts can be adapted for batch processing by iterating over a list of gene symbols.
-
-### 6. Additional Key Points and Resources
-- **Species-specific databases** (e.g., Wormbase, Flybase) and AWS iGenomes exist, but may be outdated.
-- **Chromosome naming conventions** differ by platform (e.g., NCBI/Ensembl: 1,2,...,X,Y,MT; UCSC: chr1, chr2, ..., chrM).
-- **Annotation files should use stable gene IDs** (not gene symbols) for consistency across versions.
-- **Quality control**: Use annotation files with a `gene_biotype` field for best results in automated pipelines.
-- **Download locations**: NCBI, Ensembl, GENCODE, and UCSC all provide FTP and browser-based access to assemblies and annotations.
 
 ### References
 1. Haibo Liu, LinkedIn. [Notes on reference genome resources](https://www.linkedin.com/feed/update/urn:li:activity:7309376644169752577/?originTrackingId=1OaGKrcAQMub5NqA11hTZw%3D%3D)
