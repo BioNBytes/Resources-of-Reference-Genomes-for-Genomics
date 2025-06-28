@@ -1,4 +1,4 @@
-## Fact-Checked and Expanded Guide: Reference Genomes and Genome Annotations for Human and Mouse
+## Reference Genomes and Genome Annotations
 
 This version incorporates and verifies information from the provided markdown, the attached PDF, and authoritative sources. It corrects, clarifies, and expands on key points, especially regarding assembly versions, annotation formats, database strengths/limitations, and best practices.
 
@@ -87,16 +87,142 @@ This version incorporates and verifies information from the provided markdown, t
 
 ### **8. Programmatic Access: Mouse Gene Example**
 
-- **NCBI Entrez Direct**:
+Below are code examples for retrieving various types of information (e.g., canonical transcript IDs) for mouse genes (can be adapted to be used for human genome as well) from both NCBI and Ensembl.
 
-```bash
-# Get mouse gene info (e.g., TP53)
-esearch -db gene -query "Tp53[Gene Name] AND Mus musculus[Organism]" | \
-elink -target nuccore | \
-efetch -format fasta
+
+#### **A. Retrieving Canonical NCBI RefSeq Transcript for a Mouse Gene**
+
+This Python script uses the NCBI E-utilities API to:
+
+- Search for the mouse gene symbol and retrieve its GeneID.
+- Find all RefSeq RNA transcripts linked to that gene.
+- Filter for curated NM_ RefSeq mRNA accessions.
+- Return the first NM_ accession as the canonical transcript (commonly used convention).
+
+```python
+import requests
+from xml.etree import ElementTree as ET
+
+def get_ncbi_canonical_transcript(gene_symbol, organism="Mus musculus"):
+    # Step 1: Use esearch to get the Gene ID for the given gene symbol and organism
+    search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+    search_params = {
+        "db": "gene",
+        "term": f"{gene_symbol}[Gene Name] AND {organism}[Organism]",
+        "retmode": "json"
+    }
+    response = requests.get(search_url, params=search_params)
+    gene_id_list = response.json()["esearchresult"]["idlist"]
+
+    if not gene_id_list:
+        return f"No gene found for {gene_symbol}"
+
+    gene_id = gene_id_list[0]
+
+    # Step 2: Use elink to find RefSeq RNA nucleotide records linked to the Gene ID
+    link_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi"
+    link_params = {
+        "dbfrom": "gene",
+        "db": "nucleotide",
+        "id": gene_id,
+        "retmode": "json",
+        "linkname": "gene_nuccore_refseqrna"
+    }
+    response = requests.get(link_url, params=link_params)
+    try:
+        linked_ids = response.json()["linksets"][0]["linksetdbs"][0]["links"]
+    except (KeyError, IndexError):
+        return f"No RefSeq transcripts found for {gene_symbol}"
+
+    # Step 3: Use esummary to get detailed transcript info (limit to first 50 IDs)
+    ids_str = ",".join(linked_ids[:50])
+    summary_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+    summary_params = {
+        "db": "nucleotide",
+        "id": ids_str,
+        "retmode": "xml"
+    }
+    response = requests.get(summary_url, params=summary_params)
+    root = ET.fromstring(response.content)
+
+    # Step 4: Filter for curated NM_ (RefSeq mRNA) accessions
+    transcripts = []
+    for docsum in root.findall(".//DocSum"):
+        accession = None
+        for item in docsum.findall("Item"):
+            if item.attrib.get("Name") == "Caption":
+                if item.text.startswith("NM_"):
+                    accession = item.text
+        if accession:
+            transcripts.append(accession)
+
+    if transcripts:
+        # Return the first NM_ accession as canonical (commonly used convention)
+        return transcripts[0]
+    else:
+        return f"No NM_ (curated) transcripts found for {gene_symbol}"
+
+# Example usage
+gene_symbol = "Kras"
+canonical_transcript_id = get_ncbi_canonical_transcript(gene_symbol)
+print(f"Canonical NCBI transcript for {gene_symbol}: {canonical_transcript_id}")
 ```
 
-- **Ensembl REST API**: Use endpoints for gene lookup, orthologs, and sequence retrieval (see previous example).
+**Notes:**
+
+- NM_ accessions represent curated mRNA transcripts in RefSeq and are widely used as canonical references.
+- For some genes, multiple NM_ accessions may exist; the first is often used by convention, but users should check NCBI for gene-specific canonical definitions.
+- For batch queries, wrap this function in a loop and handle API rate limits.
+
+
+#### **B. Retrieving Canonical Ensembl Transcript for a Mouse Gene**
+
+This script queries the Ensembl REST API to:
+
+- Look up a mouse gene by symbol.
+- Retrieve the Ensembl canonical transcript ID as determined by Ensembl's internal prioritization.
+
+```python
+import requests
+
+gene_symbol = "Kras"  # Mouse gene symbol, e.g., "Kras"
+server = "https://rest.ensembl.org"
+ext = f"/lookup/symbol/mus_musculus/{gene_symbol}?expand=1"
+
+headers = {"Content-Type": "application/json"}
+r = requests.get(server + ext, headers=headers)
+
+if not r.ok:
+    r.raise_for_status()
+
+data = r.json()
+
+# The 'canonical_transcript' field contains the Ensembl transcript ID designated as canonical
+canonical_transcript_id = data.get('canonical_transcript')
+print(f"Canonical Ensembl transcript for {gene_symbol}: {canonical_transcript_id}")
+```
+
+**Notes:**
+
+- The canonical transcript in Ensembl is selected based on biological relevance and transcript completeness, and may differ from NCBI's choice.
+- The transcript ID returned (e.g., ENSMUST000000XXXXXX) can be used to fetch sequence or further annotation via other Ensembl endpoints.
+- For human, change `mus_musculus` to `homo_sapiens` in the URL.
+
+
+#### **C. Additional Tips for Programmatic Access**
+
+- **API Rate Limits:** Both NCBI and Ensembl APIs have request limits. For large-scale queries, add delays and monitor usage.
+- **Annotation Versioning:** Always record the date and version of the database used for reproducibility.
+- **Canonical Transcript Definitions:** The definition of "canonical" may differ between databases. For critical applications (e.g., clinical), consult database documentation or use gene-specific curation.
+- **Batch Processing:** Both scripts can be adapted for batch processing by iterating over a list of gene symbols.
+
+**References:**
+
+- [NCBI E-utilities documentation](https://www.ncbi.nlm.nih.gov/books/NBK25501/)
+- [Ensembl REST API documentation](https://rest.ensembl.org/documentation)
+
+These code snippets and guidelines empower users to directly access and utilize canonical transcript IDs for downstream analyses, ensuring consistency and reproducibility in genomics workflows.
+
 
 
 ### **9. Additional Key Points and Resources**
