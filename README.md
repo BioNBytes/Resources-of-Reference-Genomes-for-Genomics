@@ -21,15 +21,17 @@ This guide contains key concepts and summary of resources on reference genomes a
 |**Unlocalized scaffolds**|Assigned to a specific chromosome, but position/orientation is uncertain.|
 |**Unplaced scaffolds**|Cannot be confidently assigned to any chromosome. Often contain repeats or unresolved sequences.|
 
-| Term                     | Definition                                                                                                                                      |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Reference Genome**     | A curated representation of a species’ genome, often from a single or composite individual.                                                     |
-| **Top-level sequence**   | All sequences in the genome assembly—includes chromosomes, scaffolds, contigs. The highest-level components used to reconstruct the genome.     |
-| **Primary assembly**     | The main representation of the genome (excludes alternate loci or haplotypes). Includes placed chromosomes, unlocalized and unplaced scaffolds. |
-| **Alternate loci**       | Alternate haplotypes or divergent regions (e.g., MHC haplotypes). Often used to represent genetic diversity.                                    |
-| **Patch sequences**      | Fixes or updates that do not alter the chromosome coordinate system.                                                                            |
-| **Genomic DNA sequence** | The actual DNA bases (A, T, C, G) in FASTA format, derived from the assembly.                                                                   |
-
+**Common Genome Assembly Related Terms and their Definitions:**
+- **Reference Genome**  
+    A curated, representative sequence of a species’ genome, typically derived from one or a few individuals.
+- **Top-level sequence**  
+    The highest-level components of a genome assembly, including chromosomes, scaffolds, and contigs, used to reconstruct the genome.
+- **Primary assembly**  
+    The main genome assembly version, excluding alternate haplotypes or loci; includes placed chromosomes and unlocalized/unplaced scaffolds.
+- **Alternate loci**  
+    Alternate haplotypes or divergent regions (e.g., MHC), representing genetic variation within the species.
+- **Patch sequences**  
+    Sequence corrections or updates that do not change the chromosome coordinate system.
 ### 2. Human Reference Genomes
 
 The **human reference genome** is a digital representation of human DNA used for gene annotation, variant calling, and sequence alignment. The most commonly used assemblies, **GRCh37 (hg19)** and **GRCh38 (hg38)**, are **linear assemblies** derived from a small number of individuals, primarily of European ancestry. GRCh38 added modeled centromeres, alternate loci for highly polymorphic regions (like the MHC), and improved gap representation. However, both assemblies have limitations: they lack full coverage of repetitive regions (e.g., centromeres, telomeres), suffer from **reference bias** (favoring alleles present in the reference), and underrepresent global genetic diversity.
@@ -264,7 +266,6 @@ print(f"Canonical NCBI transcript for {human_gene} ({human_organism}): {human_ca
 - **API Rate Limits:** Both NCBI and Ensembl APIs have request limits. For large-scale queries, there maybe delays.
 - **Canonical Transcript Definitions:** The definition of "canonical" may differ between databases
 - **Batch Processing:** Both scripts can be adapted for batch processing by iterating over a list of gene symbols.
-
 
 ### 6. Additional Key Points and Resources
 - **Species-specific databases** (e.g., Wormbase, Flybase) and AWS iGenomes exist, but may be outdated.
