@@ -268,7 +268,7 @@ This guide integrates the most up-to-date, peer-reviewed, and platform-specific 
 
 <div style="text-align: center">⁂</div>
 
-[^1]: Introduction_to_resources_of_reference_genomes_for_omics_1744303221.pdf
+[^1]: [Introduction_to_resources_of_reference_genomes_for_omics_1744303221.pdf](https://www.linkedin.com/feed/update/urn:li:activity:7309376644169752577/?originTrackingId=1OaGKrcAQMub5NqA11hTZw%3D%3D)
 
 [^2]: https://news.ucsc.edu/2023/05/pangenome-draft/
 
